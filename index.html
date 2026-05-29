@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Protocol | AI Threat Validator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #e9e4d4;
+            --text-color: #5a3e2b;
+            --border-color: rgba(90, 62, 43, 0.2);
+            --safe-color: #4a6b52;
+            --threat-color: #8c3b2b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 700px;
+            padding: 3rem;
+            border: 1px solid var(--border-color);
+            background: rgba(233, 228, 212, 0.5);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .header-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .phase-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .phase-container.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Premium Input Area */
+        .input-group {
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--text-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            padding: 0.75rem 0;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-bottom-color: rgba(90, 62, 43, 0.6);
+        }
+
+        .input-field::placeholder {
+            color: rgba(90, 62, 43, 0.35);
+            font-weight: 300;
+        }
+
+        /* Magnetic Button Styling */
+        .btn-magnetic {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 1rem 2rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.1s linear, background 0.3s ease, color 0.3s ease;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .btn-magnetic:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Progress Bar Styling */
+        .scan-module {
+            margin: 3rem 0;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 2px;
+            background: var(--border-color);
+            margin: 1.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--text-color);
+            transition: width 0.05s linear;
+        }
+
+        .log-text {
+            font-family: 'Inter', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            height: 20px;
+            text-transform: uppercase;
+        }
+
+        /* Output States */
+        .verdict-box {
+            padding: 1.5rem;
+            border-left: 2px solid var(--text-color);
+            margin: 2rem 0;
+            background: rgba(90, 62, 43, 0.02);
+        }
+
+        .verdict-box.threat {
+            border-left-color: var(--threat-color);
+        }
+
+        .verdict-box.safe {
+            border-left-color: var(--safe-color);
+        }
+
+        .verdict-title-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .threat .verdict-title-text {
+            color: var(--threat-color);
+        }
+
+        .safe .verdict-title-text {
+            color: var(--safe-color);
+        }
+
+        .status-badges {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border: 1px solid transparent;
+        }
+
+        .safe .badge {
+            background: rgba(74, 107, 82, 0.1);
+            color: var(--safe-color);
+            border-color: rgba(74, 107, 82, 0.2);
+        }
+
+        .threat .badge {
+            background: rgba(140, 59, 43, 0.1);
+            color: var(--threat-color);
+            border-color: rgba(140, 59, 43, 0.2);
+        }
+
+        .reasons-list {
+            margin-top: 1rem;
+            padding-left: 1.2rem;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header-meta">
+            <span>Console // Phantom Protocol</span>
+            <span id="status-indicator">System: Idle</span>
+        </div>
+
+        <div id="phase-1" class="phase-container active">
+            <h2>AI Threat Interceptor</h2>
+            <p style="font-size: 0.95rem; opacity: 0.8;">Input an email address or link below to run a security check.</p>
+            
+            <div class="input-group">
+                <input type="text" id="asset-input" class="input-field" placeholder="e.g., security-update-icici.xyz or secure@login-portal.net" autocomplete="off">
+            </div>
+
+            <button class="btn-magnetic" onclick="appEngine.initiateAnalysis()">Analyze Asset</button>
+        </div>
+
+        <div id="phase-2" class="phase-container">
+            <h2>Analyzing Input...</h2>
+            <div class="scan-module">
+                <div class="log-text" id="scan-log">Reading input text...</div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="scan-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="phase-3" class="phase-container">
+            <h2>Analysis Results</h2>
+            <div id="verdict-display" class="verdict-box">
+                </div>
+            <button class="btn-magnetic" onclick="appEngine.resetConsole()">Check Another Asset</button>
+        </div>
+
+    </div>
+
+    <script>
+        const appEngine = {
+            userInput: "",
+            analysisResults: { isThreat: false, points: [] },
+            
+            logs: [
+                "Checking link structure...",
+                "Verifying website extension...",
+                "Scanning database for high-risk flags...",
+                "Checking for urgent or misleading wording...",
+                "Finalizing security report..."
+            ],
+
+            initiateAnalysis() {
+                const inputVal = document.getElementById('asset-input').value.trim();
+                if (!inputVal) {
+                    alert("Please enter a link or email address to check.");
+                    return;
+                }
+                
+                this.userInput = inputVal;
+                this.runHeuristicEvaluation(inputVal);
+                
+                this.switchPhase('phase-2');
+                document.getElementById('status-indicator').innerText = "System: Scanning";
+
+                const progressBar = document.getElementById('scan-progress');
+                const logDisplay = document.getElementById('scan-log');
+                
+                let progress = 0;
+                let currentLogIndex = 0;
+
+                const scanRunner = setInterval(() => {
+                    progress += 1;
+                    progressBar.style.width = `${progress}%`;
+
+                    if (progress % 20 === 0 && currentLogIndex < this.logs.length) {
+                        logDisplay.innerText = this.logs[currentLogIndex];
+                        currentLogIndex++;
+                    }
+
+                    if (progress >= 100) {
+                        clearInterval(scanRunner);
+                        setTimeout(() => this.displayVerdict(), 400);
+                    }
+                }, 35);
+            },
+
+            runHeuristicEvaluation(str) {
+                let points = [];
+                let isThreat = false;
+                const lowerStr = str.toLowerCase();
+
+                // 1. High-risk Top Level Domain inspection
+                if (lowerStr.endsWith('.xyz') || lowerStr.endsWith('.cc') || lowerStr.endsWith('.info') || lowerStr.endsWith('.biz')) {
+                    isThreat = true;
+                    points.push("Uses a suspicious website extension (.xyz, .cc, .info, or .biz) often used for scams.");
+                }
+
+                // 2. Urgent / Financial keyword masking parameters
+                const urgentKeywords = ['verify', 'secure', 'login', 'update', 'banking', 'invoice', 'free', 'gift', 'kyc', 'limitation'];
+                const matchedKeywords = urgentKeywords.filter(keyword => lowerStr.includes(keyword));
+                if (matchedKeywords.length > 0) {
+                    isThreat = true;
+                    points.push(`Contains urgent or banking words designed to trick you: [${matchedKeywords.join(', ')}].`);
+                }
+
+                // 3. Email-specific domain checking
+                if (lowerStr.includes('@')) {
+                    const structuralSafeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+                    const domainPart = lowerStr.split('@')[1];
+                    const isCommonProvider = structuralSafeDomains.some(d => domainPart === d);
+                    
+                    if (!isCommonProvider && !domainPart.includes('.edu') && !domainPart.includes('.gov') && !domainPart.includes('.co.in')) {
+                        isThreat = true;
+                        points.push(`The email sender domain ("${domainPart}") looks unrecognized and unverified.`);
+                    }
+                }
+
+                if (!isThreat) {
+                    points.push("No misleading keywords, suspicious extensions, or unusual formatting found.");
+                }
+
+                this.analysisResults = { isThreat, points };
+            },
+
+            displayVerdict() {
+                this.switchPhase('phase-3');
+                const display = document.getElementById('verdict-display');
+                const status = document.getElementById('status-indicator');
+                
+                if (this.analysisResults.isThreat) {
+                    status.innerText = "System: Threat Intercepted";
+                    display.className = "verdict-box threat";
+                    display.innerHTML = `
+                        <span class="verdict-title-text">SUSPICIOUS ASSET FLAG</span>
+                        <p style="font-size: 0.95rem;">The asset <code>"${this.userInput}"</code> shows clear signs of a potential security risk.</p>
+                        
+                        <div class="status-badges">
+                            <span class="badge">Do Not Trust</span>
+                            <span class="badge">Risk Detected</span>
+                        </div>
+
+                        <ul class="reasons-list">
+                            ${this.analysisResults.points.map(pt => `<li>${pt}</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    status.innerText = "System: Verified Safe";
+                    display.className = "verdict-box safe";
+                    display.innerHTML = `
+                        <span class="verdict-title-text">VERIFIED SAFE</span>
+                        <p style="font-size: 0.95rem;">The asset <code>"${this.userInput}"</code> looks completely clean and standard.</p>
+                        
+                        <div class="status-badges">
+                            <span class="badge">Safe to use</span>
+                            <span class="badge">Safe to enter information</span>
+                        </div>
+
+                        <ul class="reasons-list">
+                            ${this.analysisResults.points.map(pt => `<li>${pt}</li>`).join('')}
+                        </ul>
+                    `;
+                }
+
+                this.bindMagneticEffects();
+            },
+
+            switchPhase(phaseId) {
+                document.querySelectorAll('.phase-container').forEach(el => el.classList.remove('active'));
+                setTimeout(() => {
+                    document.getElementById(phaseId).classList.add('active');
+                }, 50);
+            },
+
+            resetConsole() {
+                document.getElementById('asset-input').value = "";
+                document.getElementById('scan-progress').style.width = "0%";
+                document.getElementById('status-indicator').innerText = "System: Idle";
+                this.switchPhase('phase-1');
+                this.bindMagneticEffects();
+            },
+
+            bindMagneticEffects() {
+                const buttons = document.querySelectorAll('.btn-magnetic');
+                buttons.forEach(btn => {
+                    btn.addEventListener('mousemove', function(e) {
+                        const bound = this.getBoundingClientRect();
+                        const dx = e.clientX - bound.left - (bound.width / 2);
+                        const dy = e.clientY - bound.top - (bound.height / 2);
+                        this.style.transform = `translate(${dx * 0.18}px, ${dy * 0.18}px)`;
+                    });
+
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translate(0px, 0px)';
+                    });
+                });
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            appEngine.bindMagneticEffects();
+        });
+    </script>
+</body>
+</html>
