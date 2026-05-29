@@ -223,7 +223,7 @@
 
         <div id="phase-1" class="phase-container active">
             <h2>AI Threat Interceptor</h2>
-            <p style="font-size: 0.95rem; opacity: 0.8;">Input an email address or link below to run a security check.</p>
+            <p style="font-size: 0.95rem; opacity: 0.8;">Input an email address or website link below to run a security check.</p>
             
             <div class="input-group">
                 <input type="text" id="asset-input" class="input-field" placeholder="e.g., security-update-icici.xyz or secure@login-portal.net" autocomplete="off">
@@ -244,8 +244,7 @@
 
         <div id="phase-3" class="phase-container">
             <h2>Analysis Results</h2>
-            <div id="verdict-display" class="verdict-box">
-                </div>
+            <div id="verdict-display" class="verdict-box"></div>
             <button class="btn-magnetic" onclick="appEngine.resetConsole()">Check Another Asset</button>
         </div>
 
@@ -266,8 +265,20 @@
 
             initiateAnalysis() {
                 const inputVal = document.getElementById('asset-input').value.trim();
+                
+                // 1. Basic empty check
                 if (!inputVal) {
                     alert("Please enter a link or email address to check.");
+                    return;
+                }
+
+                // 2. Format Syntax Validation (Regex Patterns)
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const domainUrlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/\S*)?$/;
+
+                // Reject if it matches neither a standard email format nor a valid domain structure
+                if (!emailRegex.test(inputVal) && !domainUrlRegex.test(inputVal)) {
+                    alert("❌ Invalid input standard. Please enter a fully qualified email address (e.g., user@domain.com) or a web destination/link (e.g., portal.net).");
                     return;
                 }
                 
@@ -307,7 +318,7 @@
                 // 1. High-risk Top Level Domain inspection
                 if (lowerStr.endsWith('.xyz') || lowerStr.endsWith('.cc') || lowerStr.endsWith('.info') || lowerStr.endsWith('.biz')) {
                     isThreat = true;
-                    points.push("Uses a suspicious website extension (.xyz, .cc, .info, or .biz) often used for scams.");
+                    points.push("Uses a suspicious website extension (.xyz, .cc, .info, or .biz) commonly associated with spoofing setups.");
                 }
 
                 // 2. Urgent / Financial keyword masking parameters
@@ -315,7 +326,7 @@
                 const matchedKeywords = urgentKeywords.filter(keyword => lowerStr.includes(keyword));
                 if (matchedKeywords.length > 0) {
                     isThreat = true;
-                    points.push(`Contains urgent or banking words designed to trick you: [${matchedKeywords.join(', ')}].`);
+                    points.push(`Contains urgent or systemic baiting terms: [${matchedKeywords.join(', ')}].`);
                 }
 
                 // 3. Email-specific domain checking
@@ -324,14 +335,14 @@
                     const domainPart = lowerStr.split('@')[1];
                     const isCommonProvider = structuralSafeDomains.some(d => domainPart === d);
                     
-                    if (!isCommonProvider && !domainPart.includes('.edu') && !domainPart.includes('.gov') && !domainPart.includes('.co.in')) {
+                    if (!isCommonProvider && !domainPart.includes('.edu') && !domainPart.includes('.gov') && !domainPart.includes('.co.in') && !domainPart.includes('.ac.in')) {
                         isThreat = true;
-                        points.push(`The email sender domain ("${domainPart}") looks unrecognized and unverified.`);
+                        points.push(`The email server origin domain ("${domainPart}") is unrecognized or unlisted in safe registries.`);
                     }
                 }
 
                 if (!isThreat) {
-                    points.push("No misleading keywords, suspicious extensions, or unusual formatting found.");
+                    points.push("Passed layout checking. No malicious keywords, hazardous domain extensions, or suspicious structural anomalies found.");
                 }
 
                 this.analysisResults = { isThreat, points };
@@ -347,7 +358,7 @@
                     display.className = "verdict-box threat";
                     display.innerHTML = `
                         <span class="verdict-title-text">SUSPICIOUS ASSET FLAG</span>
-                        <p style="font-size: 0.95rem;">The asset <code>"${this.userInput}"</code> shows clear signs of a potential security risk.</p>
+                        <p style="font-size: 0.95rem;">The asset <code>"${this.userInput}"</code> shows anomalies matching known phishing or scam frameworks.</p>
                         
                         <div class="status-badges">
                             <span class="badge">Do Not Trust</span>
@@ -363,11 +374,11 @@
                     display.className = "verdict-box safe";
                     display.innerHTML = `
                         <span class="verdict-title-text">VERIFIED SAFE</span>
-                        <p style="font-size: 0.95rem;">The asset <code>"${this.userInput}"</code> looks completely clean and standard.</p>
+                        <p style="font-size: 0.95rem;">The structure of <code>"${this.userInput}"</code> aligns with standard domain/communication registry configurations.</p>
                         
                         <div class="status-badges">
-                            <span class="badge">Safe to use</span>
-                            <span class="badge">Safe to enter information</span>
+                            <span class="badge">Safe to browse</span>
+                            <span class="badge">Standard Format</span>
                         </div>
 
                         <ul class="reasons-list">
